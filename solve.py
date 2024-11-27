@@ -4,16 +4,18 @@ from paramiko import SSHClient
 from scp import SCPClient
 
 def main():
+    args = sys.argv[1:]
     # Load JSON file into dictionary
-    data = json.loads(open("metadata.json").read())
+    # data = json.loads(open("metadata.json").read())
 
     # taken from: https://github.com/jbardin/scp.py
     # copy over the tar file
     ssh1 = SSHClient()
     ssh1.load_system_host_keys()
-    ssh1.connect( username='ctf-player',
-                password=data["password"],
-                hostname="ssh_host")
+    ssh1.connect(hostname='localhost', 
+                port = int(args[0]),
+                username='ctf-player',
+                password=args[1])
 
 
     # SCPCLient takes a paramiko transport as its only argument
@@ -25,7 +27,7 @@ def main():
     ssh1.close()
 
     # Connect to SSH server
-    s1 = ssh("ctf-player", "ssh_host", password=data["password"])
+    s1 = ssh("ctf-player", port=int(args[0]), password=args[1])
     r1 = s1.remote('localhost', 5556)
     
     # skip 2 lines

@@ -1,10 +1,7 @@
-import random
-import string
 import os
 import sys
 import datetime
 import traceback
-import bcrypt
 import magic
 import sys
 import tarfile
@@ -15,8 +12,9 @@ import subprocess
 print(os.path.realpath(__file__))
 
 USER_FILEPATH = Path("/home/ctf-player/downloads/").resolve()
-FS_STORAGE_FILEPATH = Path("/home/joey_file_service/").resolve()
-FLAG_PATH = Path("/home/joey_file_service/flag.txt").resolve()
+FS_STORAGE_FILEPATH = Path("/home/joey_file_system/").resolve()
+FS_EXEC_FILEPATH = Path("/home/joey_file_system_exec/get_file_info.sh").resolve()
+FLAG_PATH = Path("/home/joey_file_system/flag.txt").resolve()
 MAX_LINES = 100
 
 def upload_files(tar_filepath_name):
@@ -26,6 +24,10 @@ def upload_files(tar_filepath_name):
     # Check if the file is within the directory
     if USER_FILEPATH not in tar_filepath.parents:
         print(f"ERROR: {tar_filepath_name} not in {USER_FILEPATH}")
+        return False
+    
+    if not tar_filepath.exists() or not tar_filepath.is_file():
+        print(f"ERROR: {tar_filepath_name} is not a file!")
         return False
 
     print("FILE:", magic.from_file(tar_filepath_name))
@@ -38,7 +40,7 @@ def upload_files(tar_filepath_name):
                 print(f"Ignored illegal tar archive entry {entry.name}")
             
             tar.extract(entry, FS_STORAGE_FILEPATH)
-    print("successfully uploaded", len(tar.get_members()), "files")
+        print("successfully uploaded", len(tar.getnames()), "files")
     return True
             
 def cat_file(filepath_str):
@@ -47,7 +49,7 @@ def cat_file(filepath_str):
     
     # Check if the file is within the directory
     if FS_STORAGE_FILEPATH not in filepath.parents:
-        print(f"ERROR: {filepath_str} not in {USER_FILEPATH}")
+        print(f"ERROR: {filepath_str} not in {FS_STORAGE_FILEPATH}")
         return False
     elif FLAG_PATH == filepath:
         print(f"ERROR: cannot cat this file")
@@ -91,93 +93,73 @@ def reset_file_system():
         if item.is_file() and item.name != "flag.txt":
             print(f"Deleting: {item}")
             item.unlink()
-    return False
+    return True
     
 def get_file_info():
-    # delete all user generated files
-    for item in FS_STORAGE_FILEPATH.iterdir(): 
-        if item.is_file() and item.name != "flag.txt":
-            print(f"Deleting: {item}")
-            item.unlink()
+    # get info of the files using custom script
+    result = subprocess.run(["bash", FS_EXEC_FILEPATH], capture_output=True, text=True)
 
-
-    
-
-
-            
-   
-
-# ensure we aren't writing to an existing file
-def _exists(fn):
-    try:
-        os.lstat(fn)
-    except OSError:
-        return False
-    else:
-        return True
-
-# get ourselves a temporary file to write to
-def temp_mktemp(prefix="", suffix=""):
-    global rolling_counter
-    dir = "/home/ctf-player/tmp/"
-
-    names = _get_candidate_names()
-    
-    for i in range(TMP_MAX):
-        i_circular = (rolling_counter + i) % TMP_MAX
-        name = names[i_circular]
-        file = os.path.join(dir, prefix + name + suffix)
-        if not _exists(file):
-            rolling_counter = rolling_counter + 1
-            return file
-        
-    raise Exception("No usable temporary filename found")
-
-# so our other admins can get the flag, they can slow down time so
-# no issue if the file exists for only a moment
-def write_flag_secure():
-    temp_flag_file = temp_mktemp()
-    flag = open("/challenge/flag.txt").read()
-    now = datetime.datetime.now()
-    append = " - DO NOT DISTRIBUTE - "
-    append += f" - FROM: FLAG SERVER at time - {now}"
-    # next level integrity hash!!!
-    salt = bcrypt.gensalt()
-    result = bcrypt.hashpw(
-       password=append.encode('utf-8'),
-       salt=salt
-    )
-    append += result.decode('utf-8')
-    f = open(temp_flag_file, 'w+')
-    f.write(flag)
-    f.write(append)
-    f.close()
-    # admin has saved it with premonition, we can delete
-    os.remove(temp_flag_file)
-    print("wrote flag securely to: ", temp_flag_file)
+    # Print the output and errors
+    print("Output:", result.stdout)
+    print("Error:", result.stderr)
+    print("Return Code:", result.returncode)
 
 def exit():
   sys.exit(0)
 
-print("Welcome to the secure flag service! Only admins should use this service. Not like you could get the flag though, you operate too slowly to catch our flags.")
+print("Joey File System (JFS) version 1.0.0.")
+print("MESSAGE: We guarantee your files are super safe and secure using our proprietary storage algorithms!")
 
 while(True):
   try:
-    inp = input("put in command: ")
-    if (inp == "temp"):
-        write_flag_secure()
-    elif(inp == "flag"):
-       flag = open("/challenge/flag.txt").read()
-       salt = bcrypt.gensalt()
-       result = bcrypt.hashpw(
-            password=flag.encode('utf-8'),
-            salt=salt
-       )
-       print(flag)
-       print("have fun with this!!!")
-    elif (inp == "exit"):
-       exit()
+    inp = input("USER COMMAND: ")
+    user_args = inp.split()
+
+    if not user_args:
+        print(f"ERROR: Unknown command. Type 'help' for a list of commands.")
+        continue
+
+    if (user_args[0] == "help"):
+        print("OPTIONS: ")
+        print("-"*20)
+        print("upload_files - upload files to JFS. Must be tar, and tar must be in downloads folder.")
+        print("cat_file: preview your file stored in JFS")
+        print("download_file: download file stored in JFS back to user downloads.")
+        print("reset_file_system: reset the file system (delete everything)")
+        print("get_file_info: get info about all stored files, and current cost of running JFS")
+        print("exit: exit JFS")
+        print("-"*20)
+    elif user_args[0] == "upload_files":
+        if len(user_args) < 2:
+            print("ERROR: 'upload_files' requires a filename argument.")
+        else:
+            if (upload_files(user_args[1])):
+                print("Successfully uploaded files!")
+    elif user_args[0] == "cat_file":
+        if len(user_args) < 2:
+            print("ERROR: 'cat_file' requires a filename argument.")
+        else:
+            cat_file(user_args[1])
+    elif user_args[0] == "download_file":
+        if len(user_args) < 2:
+            print("ERROR: 'download_file' requires a filename argument.")
+        else:
+            if (download_file(user_args[1])):
+                print("succesfully downloaded file")
+    elif user_args[0] == "reset_file_system":
+        res = reset_file_system()
+        if res:
+            print("Successfully reset JFS.")
+    elif user_args[0] == "get_file_info":
+        get_file_info()
+    elif user_args[0] == "exit":
+        exit()
+    else:
+        print(f"ERROR: Unknown command '{user_args[0]}'. Type 'help' for a list of commands.")
+
   except Exception as e:
     print("ERROR", e)
     print(traceback.format_exc())
     break
+  
+

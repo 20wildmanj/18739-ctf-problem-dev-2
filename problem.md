@@ -1,6 +1,6 @@
-# General SSH
+# Joey File System
 
-- Namespace: 18739
+- Namespace: picoctf/18739f24
 - ID: jwildman-problem-dev-2
 - Type: custom
 - Category: System fundamentals
@@ -10,24 +10,33 @@
 
 ## Description
 
-Do you know how to move between directories and read files in the shell?
+I made an amazing new file system called joey file system (JFS)! It allows you to upload
+your files to my file system, which get securely stored in the joey cloud. You can
+download your files, view your files, and check their costs all through this CLI. I may
+have left in some confidential information in the file system but I think I made sure
+you can't access it. At least I think?
 
 ## Details
 
 `ssh -p {{port("ssh")}} ctf-player@{{server("ssh")}}` using password
 `{{lookup("password")}}`
 
-Then run `$ nc {{server}} {{port}}` / `nc localhost {{port}}` inside the ssh
+Then run `$ nc 5556` inside the ssh
 
 ## Hints
 
-- There's a reason mktemp is deprecated, why are they making their own implementation of it?
+- I tried my best to make sure all files stay within the file system, but I'm not quite
+  sure that they do.
 
 ## Solution Overview
 
-figure out the temp file locations by submitting "temp" command a bunch of times.
-Then once you know the temp file location, you can then create a symlink in between the time
-the temp file location is generated and when its opened so you can then get the flag (TOCTOU).
+My solution involves using a tarslip vulnerability to rewrite the shell script used
+to calculate the "cost" of the files currently stored in the file system. If you
+upload a tar file with a relative path (e.g. `../joey_file_system_exec/--`) then you can
+then upload files into that folder, when it is inaccessible otherwise (can't view / overwrite).
+Uploading such a malicious tarfile using the `upload_files` endpoint, and then running
+a malicious script to cat the flag using the `get_file_info` command will then net you
+the flag.
 
 ## Challenge Options
 
@@ -43,17 +52,18 @@ init: true
 
 ## Learning Objective
 
-Showcasing how TOCTOU can actually be possible in the real world by mimicking an actual vulnerability
-in a modified version of mktemp
+A showcase of path traversal vulnerabilities and how relative paths can be abused to gain
+access to parts of a file system that were not intended to be accessible. Also using
+shell scripting to get the flag.
 
 ## Tags
 
 - ssh
 - bash
-- example
+- linux
 
 ## Attributes
 
 - author: Joey Wildman (jwildman)
 - organization: 18739
-- event: 18739 Problem Development 1
+- event: 18739 Problem Development 2

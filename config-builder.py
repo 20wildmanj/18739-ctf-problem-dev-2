@@ -44,7 +44,7 @@ def main():
                 flag_rand = flag_rand[1:-1]
                 flag_rand = flag_rand.zfill(8)
 
-        flag = "picoCTF{b3_c4r3ful_w17h_73mp_f1l35" + flag_rand + "}"
+        flag = "picoCTF{7Ar5_aR3_dan93R0U5" + flag_rand + "}"
         open('/challenge/flag.txt', 'w').write(flag)
 
         # Create and update metadata.json =====================================

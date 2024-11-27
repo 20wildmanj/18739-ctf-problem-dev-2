@@ -28,16 +28,26 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python3 \
     netcat \
     python3-pip \
-    socat
+    socat \
+    bc
 
 
 COPY config-sshhost.py /challenge/
-COPY joey_file_system.py /challenge/
-COPY --from=builder /challenge/flag.txt /challenge/
+RUN mkdir /home/joey_file_system_exec/
+RUN mkdir /home/joey_file_system/
+
+COPY joey_file_system.py /home/joey_file_system_exec/
+COPY get_file_info.sh /home/joey_file_system_exec/
+COPY --from=builder /challenge/flag.txt /home/joey_file_system
+
 RUN chown -R root:root /challenge/
 RUN chmod -R 700 /challenge/
-# RUN chown root:root /challenge/flag.txt
-# RUN chmod 700 /challenge/flag.txt
+
+RUN chown -R root:root /home/joey_file_system_exec/
+RUN chmod -R 700 /home/joey_file_system_exec/
+RUN chown -R root:root /home/joey_file_system/
+RUN chmod -R 700 /home/joey_file_system/
+
 RUN pip3 install python-magic
 
 COPY start.sh /opt/
