@@ -1,4 +1,4 @@
-# Problem Dev 1
+# Problem Dev 2
 
 This problem's infrastructure is based on the "general-ssh" example found in the
 [picoCTF/start-problem-dev](https://github.com/picoCTF/start-problem-dev/tree/master/example-problems/general-ssh)
@@ -29,7 +29,7 @@ been implementing a file system so I thought it would be cool to combine the con
 a dummy file system with some sort of vulnerability. Based on those two initial points
 of inspiration I came up with the concept for this CTF problem.
 
-I essentially mocked up a super lightweightversion of a file system where you could upload files to it,
+I essentially mocked up a super lightweight version of a file system where you could upload files to it,
 read the file, download the files, and remove the files, although it's really more of an
 append-only file system with how to remove file you need to reset the entire file system. This file
 system keeps all of the stored files uploaded by the user in a protected folder that the user can't
@@ -52,7 +52,7 @@ for `get_file_info`. Then, on a subsequent call of `get_file_info`, the
 overwritten script file gets called, which could for example contain a cat command to print out the flag.txt
 file. I assume you could also spawn a shell / RCE but that is not necessary to solve this problem.
 
-The other methods I implemented (`download_file`, `view_file`) serve as more of a distraction where they
+The other methods I implemented (`download_file`, `cat_file`) serve as more of a distraction where they
 do also involve file paths but they have more explicit checks to ensure the file paths that are used
 lie within the actual file path of the user so they can't really do anything nefarious with them.
 
